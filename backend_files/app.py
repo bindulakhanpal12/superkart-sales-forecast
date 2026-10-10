@@ -10,10 +10,14 @@ model = joblib.load("superkart_sales_model_v1.joblib")
 
 # Columns the model was trained on
 FEATURES = [
-    "Product_Weight", "Product_Sugar_Content", "Product_Allocated_Area",
-    "Product_Type", "Product_MRP", "Store_Id",
-    "Product_Id_char", "Product_Type_Category",
+    "Product_Weight", "Product_Sugar_Content", "Product_Allocated_Area", "Product_MRP",
+    "Store_Size", "Store_Location_City_Type", "Store_Type",
+    "Product_Id_char", "Store_Age_Years", "Product_Type_Category",
 ]
+
+def prepare_features(df):
+    """Select the model's input columns in the order used in training."""
+    return df[FEATURES]
 
 PERISHABLES = ["Dairy", "Meat", "Fruits and Vegetables", "Breakfast", "Breads", "Seafood"]
 
