@@ -8,30 +8,12 @@ app = Flask("SuperKart Sales Forecast")
 # Load the serialized model pipeline once, at startup
 model = joblib.load("superkart_sales_model_v1.joblib")
 
-# Columns the model was trained on
+# Columns the model was trained on, in training order
 FEATURES = [
     "Product_Weight", "Product_Sugar_Content", "Product_Allocated_Area", "Product_MRP",
     "Store_Size", "Store_Location_City_Type", "Store_Type",
-    "Product_Id_char", "Store_Age_Years", "Product_Type_Category",
+    "Product_Id_char", "Product_Type_Category", "Store_Age_Years",
 ]
-
-def prepare_features(df):
-    """Select the model's input columns in the order used in training."""
-    return df[FEATURES]
-
-PERISHABLES = ["Dairy", "Meat", "Fruits and Vegetables", "Breakfast", "Breads", "Seafood"]
-
-
-def prepare_features(df):
-    """Apply the same cleaning and feature engineering used in training."""
-    df = df.copy()
-    df["Product_Sugar_Content"] = df["Product_Sugar_Content"].replace("reg", "Regular")
-    if "Product_Id_char" not in df.columns:
-        df["Product_Id_char"] = df["Product_Id"].str[:2]
-    df["Product_Type_Category"] = df["Product_Type"].apply(
-        lambda x: "Perishables" if x in PERISHABLES else "Non Perishables"
-    )
-    return df[FEATURES]
 
 
 @app.get("/")
@@ -43,7 +25,7 @@ def home():
 @app.post("/v1/predict")
 def predict_sales():
     data = request.get_json()
-    input_df = prepare_features(pd.DataFrame([data]))
+    input_df = pd.DataFrame([data])[FEATURES]
     prediction = model.predict(input_df)[0]
     return jsonify({"Predicted_Sales": round(float(prediction), 2)})
 
@@ -52,8 +34,8 @@ def predict_sales():
 @app.post("/v1/predictbatch")
 def predict_sales_batch():
     file = request.files["file"]
-    raw_df = pd.read_csv(file)
-    predictions = model.predict(prepare_features(raw_df))
+    input_df = pd.read_csv(file)[FEATURES]
+    predictions = model.predict(input_df)
     return jsonify({"Predicted_Sales": [round(float(p), 2) for p in predictions]})
 
 
